@@ -3,6 +3,7 @@ import { DetailWidgetProps, AdminProduct } from "@medusajs/framework/types"
 import { clx, Container, Heading, Text } from "@medusajs/ui"
 import { useQuery } from "@tanstack/react-query"
 import { sdk } from "../lib/sdk"
+import { EditBrandForm } from "../components/product-page/brand-edit-form"
 
 type AdminProductBrand = AdminProduct & {
     brand?: {
@@ -27,6 +28,11 @@ const ProductBrandWidget = ({
             <div className="flex items-center justify-between px-6 py-4">
                 <div>
                     <Heading level="h2">Brand</Heading>
+                </div>
+                <div>
+                    <EditBrandForm
+                        productId={product.id}
+                    />
                 </div>
             </div>
             <div

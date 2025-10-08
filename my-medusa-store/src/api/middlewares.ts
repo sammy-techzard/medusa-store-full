@@ -1,9 +1,15 @@
 import {
     defineMiddlewares,
     validateAndTransformBody,
+    validateAndTransformQuery,
 } from "@medusajs/framework/http"
-import { PostAdminCreateBrand } from "./admin/brands/validators"
+import { PostAdminCreateBrand, PatchAdminUpdateBrand } from "./admin/brands/validators"
 import { z } from "zod"
+import { createFindParams } from "@medusajs/medusa/api/utils/validators"
+
+export const GetBrandsSchema = createFindParams()
+
+
 
 export default defineMiddlewares({
     routes: [
@@ -15,12 +21,49 @@ export default defineMiddlewares({
             ],
         },
         {
+            matcher: "/admin/brands/:id",
+            method: "PATCH",
+            middlewares: [
+                validateAndTransformBody(PatchAdminUpdateBrand),
+            ],
+        },
+        {
+            matcher: "/admin/brands/:id",
+            method: "DELETE",
+            // no body required for deletion
+        },
+        {
             matcher: "/admin/products",
             method: ["POST"],
             additionalDataValidator: {
                 brand_id: z.string().optional(),
             },
         },
+        {
+            matcher: "/admin/products/:id",
+            method: ["POST"],
+            additionalDataValidator: {
+                brand_id: z.string().optional().nullable(),
+            }
+        },
+        {
+            matcher: "/admin/brands",
+            method: "GET",
+            middlewares: [
+                validateAndTransformQuery(
+                    GetBrandsSchema,
+                    {
+                        defaults: [
+                            "id",
+                            "name",
+                            "products.*",
+                        ],
+                        isList: true,
+                    }
+                ),
+            ],
+        },
+
 
     ],
 })
