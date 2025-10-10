@@ -26,36 +26,34 @@ updateProductsWorkflow.hooks.productsUpdated(
         const link = container.resolve("link")
         const logger = container.resolve("logger")
 
-        const links: LinkDefinition[] = products.map((product) => ({
-            [Modules.PRODUCT]: { product_id: product.id },
-            [BRAND_MODULE]: { brand_id: brandId },
-        }))
-
-        // Always delete existing links for these products first
+        // Delete existing links for these products first
         for (const product of products) {
-            await link.delete({
-                [Modules.PRODUCT]: { product_id: product.id },
-            })
+            try {
+                await link.dismiss({
+                    [Modules.PRODUCT]: { product_id: product.id },
+                    [BRAND_MODULE]: {},
+                })
+            } catch (error) {
+                // Link might not exist, which is fine
+                logger.debug(`No existing link to dismiss for product ${product.id}`)
+            }
         }
 
         if (brandId) {
-            // First, dismiss any existing links for these products
-            await link.dismiss(
-                products.map((product) => ({
-                    [Modules.PRODUCT]: { product_id: product.id },
-                    [BRAND_MODULE]: {},
-                }))
-            )
+            // Create new links with the brand
+            const links: LinkDefinition[] = products.map((product) => ({
+                [Modules.PRODUCT]: { product_id: product.id },
+                [BRAND_MODULE]: { brand_id: brandId },
+            }))
 
-            // Then create the new links
             await link.create(links)
             logger.info(`Linked brand '${brandId}' to ${products.length} product(s)`)
-        } else {
-            // Clear existing links when brandId is null
-            await link.dismiss(links)
-            logger.info(`Cleared brand links for ${products.length} product(s)`)
-        }
 
-        return new StepResponse(links, links)
+            return new StepResponse(links, links)
+        } else {
+            // brandId is null - links already dismissed above
+            logger.info(`Cleared brand links for ${products.length} product(s)`)
+            return new StepResponse([], [])
+        }
     }
 )
